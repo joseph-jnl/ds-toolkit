@@ -20,7 +20,7 @@ class Feature(object):
     Attributes
     ----------
     name: string
-    ftype: string >> 'Categorical', 'Numeric', 'Date', 'Unknown'
+    ftype: string >> 'ID', Categorical', 'Numeric', 'Date', 'Unknown'
     data: numpy Series
     missing_index: int list >> [0, 1, 4, 100, 123]  
     """
@@ -50,9 +50,9 @@ class MissingValues(object):
     df: input pandas dataframe
 
     optional:
-    categorical = manually specify string array of feature columns that are categorical
+    categorical = define string array of feature columns that are categorical
                   ex. >> categorical = ['browser', 'country']
-    identifier = manually specify string array of feature columns that are identifiers
+    identifier = define string array of feature columns that are identifiers
                   ex >> identifier = ['id', 'name']
     ignore = specify columns to ignore
 
@@ -62,9 +62,17 @@ class MissingValues(object):
     df: input pandas data frame
     """
 
-    def __init__(self, df, **kwargs):
+    def __init__(self, df, categorical=[], identifier=[], ignore=[]):
         self.df = df
         self.features = {}
         for feature in df.columns:
-            if df[feature].isnull().any():
+            if df[feature].isnull().any() and feature not in ignore:
                 self.features[feature] = Feature(df[feature])
+                # Manually override feature type if defined
+                if feature in categorical:
+                    self.features[feature].ftype = 'Categorical'
+                elif feature in identifier:
+                    self.features[feature].ftype = 'ID'
+
+
+

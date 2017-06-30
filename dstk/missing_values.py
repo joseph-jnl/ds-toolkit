@@ -31,7 +31,7 @@ class Feature(object):
             self.ftype = 'Categorical'
         elif str(feature.dtype).startswith(('float', 'int')):
             self.ftype = 'Numeric'
-        elif str(feature.dtype).startswith(('dateime', 'timedelta')):
+        elif str(feature.dtype).startswith(('datetime', 'timedelta')):
             self.ftype = 'Date'
         else:
             self.ftype = 'Unknown'
@@ -50,9 +50,9 @@ class MissingValues(object):
     df: input pandas dataframe
 
     optional:
-    categorical = define string array of feature columns that are categorical
+    categorical = manually define features that are categorical
                   ex. >> categorical = ['browser', 'country']
-    identifier = define string array of feature columns that are identifiers
+    identifier = manually define features that are identifiers
                   ex >> identifier = ['id', 'name']
     ignore = specify columns to ignore
 

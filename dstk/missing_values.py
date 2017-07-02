@@ -16,7 +16,7 @@ class Feature(object):
     Parameters
     ----------
     feature: Pandas series
-    
+
     Attributes
     ----------
     name: string
@@ -49,12 +49,13 @@ class MissingValues(object):
     ----------
     df: input pandas dataframe
 
-    optional:
-    categorical = manually define features that are categorical
-                  ex. >> categorical = ['browser', 'country']
-    identifier = manually define features that are identifiers
-                  ex >> identifier = ['id', 'name']
-    ignore = specify columns to ignore
+    categorical: list >> categorical = ['browser', 'country'] 
+                    manually define features that are categorical
+
+    identifier: list >> identifier = ['id', 'name']
+                    manually define features that are identifiers
+    ignore: list
+            specify columns to ignore
 
     Attributes
     ----------
@@ -74,5 +75,25 @@ class MissingValues(object):
                 elif feature in identifier:
                     self.features[feature].ftype = 'ID'
 
+    def summary(self, plot=False):
+        '''
+        Summarize features with missing values
 
+        Parameters
+        ----------
+        plot: Show plot of missing values
+              ex >> plot=True
 
+        Returns
+        -------
+        Summary of features with missing NaN
+        Including Name, type, number of missing NaN's, % Missing
+        '''
+        print('{0:15} {1:12} {2:7}       {3:}'.format('name', 'type', '# NaNs', '%'))
+        print('------------------------------------------------')
+        for name, f in self.features.items():
+            print('{0:15} {1:12} {2:7}       {3:0.3f}'.format(name, f.ftype,
+                                                              len(f.missing_index),
+                                                              len(f.missing_index) / self.df.shape[0]))
+
+        return None

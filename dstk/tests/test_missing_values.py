@@ -34,6 +34,12 @@ def test_id():
 
 
 def test_categorical():
-    # Test features defined as identifiers
+    # Test features defined as categorical
     mv = dstk.MissingValues(df_create, categorical=['numericNaN'])
-    assert mv.features['numericNaN'].ftype == 'Categorical'
+    assert mv.features['catNaN'].ftype == 'Categorical'
+
+
+# def test_summary_nomissing():
+#     # Test if there are no missing vals found
+#     mv = dstk.MissingValues(df_create['numeric1'])
+#     assert mv.summary == 

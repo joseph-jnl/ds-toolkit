@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 
-def onehotencode(df, features=None, impute='retain',
+def onehotencode(df, features=[], impute='retain',
                  first=True, sparse=False, tracknan=True, dropzerovar=True):
     '''
     Wrapper function for one hot encoding categorical variables
@@ -12,12 +12,6 @@ def onehotencode(df, features=None, impute='retain',
     '''
     dfc = df.copy()
 
-    # Check # of categorical levels
-    total_levels = sum([df[f].unique().size for f in features])
-    if total_levels > 100 and not sparse:
-        warn('{} categorical levels found, recommend using sparse matrix or feature selection'.format(
-            total_levels))
-
     # Create prefix: binary#[categorical level label]
     if features:
         prefixes = ['binary#' + s for s in features]
@@ -25,6 +19,12 @@ def onehotencode(df, features=None, impute='retain',
         features = df.select_dtypes(
             include=['object', 'category']).columns
         prefixes = ['binary#' + s for s in features]
+
+    # Check how many categorical levels
+    total_levels = sum([df[f].unique().size for f in features])
+    if total_levels > 100 and not sparse:
+        warn('{} categorical levels found, recommend using sparse matrix or feature selection'.format(
+            total_levels))
 
     # Impute using mode if specified
     if impute == 'mode':

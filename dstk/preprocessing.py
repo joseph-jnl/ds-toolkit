@@ -3,12 +3,53 @@ import pandas as pd
 import numpy as np
 
 
+def markbinary(df, features=[]):
+    '''
+    Rename columns with only 1's and 0's as binary#[feature name]
+    
+    Parameters
+    ----------
+    df: dataframe
+        Dataframe containing categorical variables to be onehot encoded
+    features: list
+        List containing column names to be marked as binary, empty will auto mark
+    '''
+
+    if features:
+        for f in features:
+            df.rename(columns={f: 'binary#' + f}, inplace=True)
+    else:
+        for f in df.columns:
+            if not f.startswith('binary#') and df[f].value_counts().index.isin([0, 1]).all():
+                df.rename(columns={f: 'binary#' + f}, inplace=True)
+
+
 def onehotencode(df, features=[], impute='retain',
                  first=True, sparse=False, tracknan=True, dropzerovar=True):
     '''
     Wrapper function for one hot encoding categorical variables
 
-    Return modified dataframe
+    Parameters
+    ----------
+    df: dataframe
+        Dataframe containing categorical variables to be onehot encoded
+    features: list
+        List containing column names to be encoded, empty will encode all 
+        object and category dtype columns
+    impute: str, 'retain' (default) or 'mode'
+        Retain NaN's or impute with mode
+    first: boolean, True (default)
+        Drop first binary column for each categorical column to remove collinearity
+    sparse: boolean False (default)
+        Use sparse matrix
+    tracknan: boolean, True (default)
+        Include column tracking rows that were NaN
+    dropzerovar: boolean, True (default)
+        Drop columns with 0 variance
+
+    Return
+    ------- 
+    Modified dataframe
     '''
     dfc = df.copy()
 

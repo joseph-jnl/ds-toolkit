@@ -89,11 +89,15 @@ class MissingValues(object):
         Summary of features with missing NaN
         Including Name, type, number of missing NaN's, % Missing
         '''
-        print('{0:15} {1:12} {2:7}       {3:}'.format('name', 'type', '# NaNs', '%'))
-        print('------------------------------------------------')
-        for name, f in self.features.items():
-            print('{0:15} {1:12} {2:7}       {3:0.3f}'.format(name, f.ftype,
-                                                              len(f.missing_index),
-                                                              len(f.missing_index) / self.df.shape[0]))
+
+        if self.features:
+            print('{0:15} {1:12} {2:7}       {3:}'.format('name', 'type', '# NaNs', '%'))
+            print('------------------------------------------------')
+            for name, f in self.features.items():
+                print('{0:15} {1:12} {2:7}       {3:0.3f}'.format(name, f.ftype,
+                                                                  len(f.missing_index),
+                                                                  len(f.missing_index) / self.df.shape[0]))
+        else:
+            print('No missing values found')
 
         return None

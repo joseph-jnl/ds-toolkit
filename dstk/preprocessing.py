@@ -3,29 +3,108 @@ import pandas as pd
 import numpy as np
 
 
-def markbinary(df, features=[]):
+def num_to_str(df, features, inplace=False):
+    '''
+    Convert numeric columns to str to mark them as categorical
+
+    Parameters
+    ----------
+    df: dataframe
+        Dataframe with columns to convert
+    features: list
+        List of column names to convert to str
+    inplace: boolean, False (default)
+        Modify dataframe in place   
+
+    Return
+    ------
+    dfm = modified dataframe
+    '''
+
+    if inplace:
+        dfm = df
+    else:
+        dfm = df.copy()
+
+    for f in features:
+        dfm[f] = dfm[f].astype(str)
+
+    return dfm
+
+
+def nan_to_binary(df, features=[], prefix=True, inplace=False, threshold=0.3):
+    '''
+    Convert columns with large amount of NaN's to a binary column
+    indicating which rows were NaN.
+
+    Parameters
+    ----------
+    df: dataframe
+        Dataframe with columns to convert
+    features: list
+        List of column names to convert to binary, 1 if NaN, 0 any other
+        If empty, auto convert columns where NaN > 30%
+    prefix: boolean, True (default)
+        rename column to binary#[feature]
+    inplace: boolean, False (default)
+        Modify dataframe in place   
+
+    Return
+    ------
+    dfm = modified dataframe
+    '''
+
+    if inplace:
+        dfm = df
+    else:
+        dfm = df.copy()
+
+    if not features:
+        features = dfm.loc[:, dfm.isnull().sum() > dfm.shape[0] * threshold].columns.tolist()
+
+    for f in features:
+        dfm[f] = dfm[f].isnull().astype(int)
+        if prefix:
+            dfm.rename(columns={f: 'binary#' + f}, inplace=True)
+    return dfm
+
+
+def mark_binary(df, features=[], inplace=False):
     '''
     Rename columns with only 1's and 0's as binary#[feature name]
-    
+
     Parameters
     ----------
     df: dataframe
         Dataframe containing categorical variables to be onehot encoded
     features: list
         List containing column names to be marked as binary, empty will auto mark
+    inplace: boolean
+        Modify dataframe in place
+
+    Return
+    ------
+    dfm = modified dataframe
     '''
+    if inplace:
+        dfm = df
+    else:
+        dfm = df.copy()
 
     if features:
         for f in features:
-            df.rename(columns={f: 'binary#' + f}, inplace=True)
+            dfm.rename(columns={f: 'binary#' + f}, inplace=True)
     else:
+        # Auto mark columns with only 1 or 0
         for f in df.columns:
-            if not f.startswith('binary#') and df[f].value_counts().index.isin([0, 1]).all():
-                df.rename(columns={f: 'binary#' + f}, inplace=True)
+            if not f.startswith('binary#') and dfm[f].value_counts().index.isin([0, 1]).all():
+                dfm.rename(columns={f: 'binary#' + f}, inplace=True)
+
+    return dfm
 
 
-def onehotencode(df, features=[], impute='retain',
-                 first=True, sparse=False, tracknan=True, dropzerovar=True):
+def onehot_encode(df, features=[], impute='retain',
+                  first=True, sparse=False, tracknan=True, dropzerovar=True):
     '''
     Wrapper function for one hot encoding categorical variables
 
@@ -39,7 +118,8 @@ def onehotencode(df, features=[], impute='retain',
     impute: str, 'retain' (default) or 'mode'
         Retain NaN's or impute with mode
     first: boolean, True (default)
-        Drop first binary column for each categorical column to remove collinearity
+        Drop first binary column for each categorical column
+        to remove collinearity
     sparse: boolean False (default)
         Use sparse matrix
     tracknan: boolean, True (default)

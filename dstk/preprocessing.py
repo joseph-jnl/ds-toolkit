@@ -29,7 +29,8 @@ def num_to_str(df, features, inplace=False):
     for f in features:
         dfm[f] = dfm[f].astype(str)
 
-    return dfm
+    if not inplace:
+        return dfm
 
 
 def nan_to_binary(df, features=[], prefix=True, inplace=False, threshold=0.3):
@@ -66,7 +67,9 @@ def nan_to_binary(df, features=[], prefix=True, inplace=False, threshold=0.3):
         dfm[f] = dfm[f].isnull().astype(int)
         if prefix:
             dfm.rename(columns={f: 'binary#' + f}, inplace=True)
-    return dfm
+    
+    if not inplace:
+            return dfm
 
 
 def mark_binary(df, features=[], inplace=False):
@@ -100,7 +103,8 @@ def mark_binary(df, features=[], inplace=False):
             if not f.startswith('binary#') and dfm[f].value_counts().index.isin([0, 1]).all():
                 dfm.rename(columns={f: 'binary#' + f}, inplace=True)
 
-    return dfm
+    if not inplace:
+            return dfm
 
 
 def onehot_encode(df, features=[], impute='retain',
@@ -167,6 +171,72 @@ def onehot_encode(df, features=[], impute='retain',
                 'binary#' + f) and not s.endswith('_nan')]
             fnanlabel = 'binary#' + f + '_nan'
             dfc.loc[dfc[fnanlabel] == 1, flabels] = np.nan
+
+    if dropzerovar:
+        zero_var_columns = dfc.var() == 0
+        dfc.drop(zero_var_columns[zero_var_columns == True].index.tolist(),
+                 axis=1,
+                 inplace=True)
+
+    return dfc
+
+
+def impact_encode(df, target, features=[], probs={}, dropzerovar=True):
+    '''
+    Wrapper function for impact/conditional probability encoding 
+    categorical variables
+    
+    For categorical variable X
+    P(X<=x | target=1) -> equiv to minmaxscaled(P(X=x | target=1))
+    
+    e.g. 
+    For categorical color = ['green', red', 'red', 'blue', 'red', 'green']
+                    target = [0, 1, 1, 1, 0, 1]
+    
+    P(X=red | target = 1) -> 2/3
+    P(X<=red | target = 1) -> (2/3 - 0.5) / (1 - 0.5) = 0.33
+    
+    weightedaverage:
+    P(X<=red | target = 1) -> (2/3 - 0.5) / (1 - 0.5) * 3/6
+
+    Parameters
+    ----------
+    df: dataframe
+        Dataframe containing categorical variables to be onehot encoded
+    target: str 
+        column name of target class
+    features: list
+        List containing column names to be encoded, empty will encode all 
+        object and category dtype columns
+    probs: dict
+        Dictionary containing previous probabilities of categorical vars,
+        if empty, will use current data
+    dropzerovar: boolean, True (default)
+        Drop columns with 0 variance
+
+    Return
+    ------- 
+    Modified dataframe
+    '''
+    dfc = df.copy()
+
+    # Create prefix: normalized#[categorical level label]
+    if features:
+        prefixes = ['normalized#' + s for s in features]
+    else:
+        features = df.select_dtypes(
+            include=['object', 'category']).columns
+        prefixes = ['normalized#' + s for s in features]
+
+
+    # Conditional probability encode
+    for f in features:
+        probs[f] = df.loc[df[target]==1, f].value_counts().divide(df.loc[:,f].value_counts()).fillna(1).to_dict() 
+        dfc[f] = df[f].transform(lambda x: np.NaN if pd.isnull(x) else probs[f][x])
+
+    #Add prefix to column names
+    dfc = dfc.rename(columns={f: prefix for f, prefix in zip(features, prefixes)})
+    print({f: prefix for f, prefix in zip(features, prefixes)})
 
     if dropzerovar:
         zero_var_columns = dfc.var() == 0
